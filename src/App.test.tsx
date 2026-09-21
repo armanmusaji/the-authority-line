@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import axe from 'axe-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { PLAY_INTERVAL_MS } from './timing'
 import indexHtml from '../index.html?raw'
 import { footer, getSetting, marksIn, mornings, placard, product, settings, ui } from './scenario'
 import { stepCount } from './reducer'
@@ -187,6 +188,9 @@ describe('Play the night', () => {
     const play = screen.getByRole('button', { name: ui.playButtonProgress(1, total) })
     expect(play).toHaveAttribute('aria-busy', 'true')
     expect(screen.getByRole('status')).toHaveTextContent(
+      ui.playStepAnnouncement(ACT.steps[0].time, ACT.steps[0].title),
+    )
+    expect(document.querySelector('.log-status')).toHaveTextContent(
       ui.playProgressMessage(ACT.label, 1, total),
     )
     expect(document.querySelector('.log')).toHaveClass('live')
@@ -247,7 +251,7 @@ describe('report actions', () => {
     await user.click(screen.getByRole('button', { name: ui.actionLabels.approve }))
 
     expect(screen.getByText(ASK.reportApproved!.heading)).toBeInTheDocument()
-    expect(screen.getByText(ASK.reportApproved!.pill.text)).toBeInTheDocument()
+    expect(document.querySelector('.morning .pill')).toHaveTextContent(ASK.reportApproved!.pill.text)
     expect(document.activeElement).toHaveTextContent(ASK.reportApproved!.resultMessage!)
     expect(screen.queryByRole('button', { name: ui.actionLabels.approve })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: ui.actionLabels.undo })).not.toBeInTheDocument()
@@ -323,10 +327,32 @@ describe('the authority line', () => {
     },
   )
 
-  it('matches the approved render: after step 4 for Act alone, after step 2 otherwise', () => {
+  it('sits after step 4 for Act alone, after the draft for Ask first, after step 2 for Flag only', () => {
     expect(ACT.limitIndex).toBe(4)
-    expect(ASK.limitIndex).toBe(2)
+    expect(ASK.limitIndex).toBe(3)
     expect(FLAG.limitIndex).toBe(2)
+  })
+
+  it('under Ask first, separates preparing the fix from sending it', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+
+    const items = [...document.querySelectorAll('ol.steps > li')]
+    const line = screen.getByTestId('authority-line')
+    const at = items.indexOf(line)
+
+    expect(line).toHaveTextContent('Its authority ended here. It could prepare the fix. It could not send it.')
+    /* Preparing the draft is above the line, inside its authority. Holding the send is below it. */
+    expect(items[at - 1]).toHaveTextContent('Prepares the fix as a draft')
+    expect(items[at + 1]).toHaveTextContent('Holds. Nothing sends.')
+    expect(items[at - 1]).not.toHaveClass('after')
+    expect(items[at + 1]).toHaveClass('after')
+  })
+
+  it('keeps Act alone and Flag only where they were, with the same labels', () => {
+    expect(ACT.limitLabel).toBe("The agent's authority ended here. It finished the job.")
+    expect(FLAG.limitLabel).toBe("The agent's authority ended here. It may only tell you.")
   })
 })
 
@@ -408,6 +434,204 @@ describe('status pills', () => {
     await selectSetting(user, 'Ask first')
     expect(screen.getByText('Was due')).toBeInTheDocument()
     expect(screen.getByText('6:00 AM to 12,480 subscribers (simulated)')).toBeInTheDocument()
+  })
+})
+
+describe('pass 4: Three mornings are the 8:40 comparison', () => {
+  it('says so in its heading', () => {
+    render(<App />)
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Three mornings, as of 8:40 AM' }),
+    ).toBeInTheDocument()
+  })
+
+  it('keeps the Ask first card at its 8:40 outcome after Approve, Undo and Redo', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+    const card = () => screen.getByRole('button', { name: /^Ask first/ })
+
+    await user.click(screen.getByRole('button', { name: ui.actionLabels.undo }))
+    expect(card()).toHaveTextContent('Paused, waiting for you')
+    expect(card()).toHaveTextContent(ASK.summary)
+
+    await user.click(screen.getByRole('button', { name: ui.actionLabels.redo }))
+    await user.click(screen.getByRole('button', { name: ui.actionLabels.approve }))
+    /* The report says it was sent. The card still shows the 8:40 morning. */
+    expect(document.querySelector('.morning .pill')).toHaveTextContent(ASK.reportApproved!.pill.text)
+    expect(card()).toHaveTextContent('Paused, waiting for you')
+    expect(card()).not.toHaveTextContent(ASK.reportApproved!.pill.text)
+  })
+})
+
+describe('pass 4: announcing a setting change', () => {
+  it('says nothing on load, then one short line per change, in the one live region', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const live = screen.getByRole('status')
+    expect(live).toHaveTextContent(/^$/)
+
+    await selectSetting(user, 'Ask first')
+    expect(live).toHaveTextContent(/^Ask first\. Paused, waiting for you\.$/)
+
+    await selectSetting(user, 'Flag only')
+    expect(live).toHaveTextContent(/^Flag only\. Sent with a dead code\.$/)
+
+    await user.click(screen.getByRole('button', { name: /^Act alone/ }))
+    expect(live).toHaveTextContent(/^Act alone\. Sent on time\.$/)
+
+    expect(document.querySelectorAll('[aria-live], [role="status"], [role="alert"]')).toHaveLength(1)
+  })
+
+  it('does not leave a stale outcome in the live region after Approve', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+    await user.click(screen.getByRole('button', { name: ui.actionLabels.approve }))
+    expect(screen.getByRole('status')).not.toHaveTextContent('Paused, waiting for you')
+  })
+})
+
+describe('pass 4: Play the night controls', () => {
+  const pauseBtn = () => screen.getByRole('button', { name: ui.pauseLabel })
+  const nextBtn = () => screen.getByRole('button', { name: ui.nextLabel })
+
+  it('shows Pause and Next only while a night is in progress', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+    expect(screen.queryByRole('button', { name: ui.pauseLabel })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ui.nextLabel })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: placard.playLabel }))
+    expect(pauseBtn()).toBeInTheDocument()
+    expect(nextBtn()).toBeInTheDocument()
+
+    await tick(stepCount('act-alone'))
+    expect(screen.queryByRole('button', { name: ui.pauseLabel })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ui.nextLabel })).not.toBeInTheDocument()
+  })
+
+  it('waits 2.5 seconds per step and announces the action, not a number', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: placard.playLabel }))
+    const live = screen.getByRole('status')
+    expect(live).toHaveTextContent('2:14 AM. Finds the expired code.')
+    expect(live).not.toHaveTextContent(/step \d/i)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PLAY_INTERVAL_MS - 1)
+    })
+    expect(live).toHaveTextContent('2:14 AM. Finds the expired code.')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(live).toHaveTextContent('2:14 AM. Pauses the launch.')
+    expect(PLAY_INTERVAL_MS).toBe(2500)
+  })
+
+  it('Pause holds the night where it is, and Resume carries on', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: placard.playLabel }))
+    fireEvent.click(pauseBtn())
+
+    expect(screen.getByRole('button', { name: ui.resumeLabel })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ui.playButtonProgress(1, 5) })).not.toHaveAttribute('aria-busy')
+    await tick(3)
+    expect(document.querySelectorAll('li.step.future')).toHaveLength(4)
+    expect(screen.getByText(ui.waitingText)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: ui.resumeLabel }))
+    await tick()
+    expect(document.querySelectorAll('li.step.future')).toHaveLength(3)
+  })
+
+  it('Next steps by hand, paused or not, and past the last step ends the night', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: placard.playLabel }))
+    fireEvent.click(pauseBtn())
+
+    fireEvent.click(nextBtn())
+    expect(screen.getByRole('status')).toHaveTextContent('2:14 AM. Pauses the launch.')
+    fireEvent.click(nextBtn())
+    fireEvent.click(nextBtn())
+    fireEvent.click(nextBtn())
+    expect(screen.getByRole('status')).toHaveTextContent('8:40 AM. You get back.')
+
+    const next = nextBtn()
+    next.focus()
+    fireEvent.click(next)
+    expect(screen.getByRole('status')).toHaveTextContent(ui.playFinishedMessage)
+    /* Pause and Next are gone, so focus goes back to Play rather than being lost. */
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: placard.playAgainLabel }))
+  })
+
+  it('leaves the reduced motion path alone: no timed reveal, no Pause or Next', async () => {
+    setReducedMotion(true)
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: placard.playLabel }))
+    expect(screen.queryByRole('button', { name: ui.pauseLabel })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ui.nextLabel })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(ui.playAtOnceMessage(ACT.label, 5))
+  })
+})
+
+describe('pass 4: phone layout content', () => {
+  it('has a one-sentence scenario and the bare task for phones, beside the full desktop copy', () => {
+    render(<App />)
+    const short = screen.getByText(placard.ledeShort)
+    expect(short).toHaveClass('plac-short')
+    expect(placard.ledeShort.match(/\.\s|\.$/g)).toHaveLength(1)
+    expect(screen.getByText('Try all three.')).toHaveClass('plac-short')
+    expect(screen.getByText(placard.lede)).toHaveClass('plac-long')
+    expect(screen.getByText(placard.ask)).toHaveClass('plac-long')
+  })
+
+  it("shows the chosen setting's current pill under it, and under no other option", async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+
+    const pills = document.querySelectorAll('.opt-pill')
+    expect(pills).toHaveLength(1)
+    expect(pills[0].closest('label')).toHaveAttribute('for', 'setting-ask-first')
+    expect(pills[0]).toHaveTextContent('Paused, waiting for you')
+
+    /* It follows the outcome, so after Approve it says what happened. */
+    await user.click(screen.getByRole('button', { name: ui.actionLabels.approve }))
+    expect(document.querySelector('.opt-pill')).toHaveTextContent(ASK.reportApproved!.pill.text)
+  })
+
+  it('keeps the pill out of the radio name and description', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+    const radio = screen.getByRole('radio', { name: 'Ask first' })
+    expect(radio).toHaveAccessibleName('Ask first')
+    expect(radio).toHaveAccessibleDescription(ASK.description)
+  })
+})
+
+describe('pass 4: card focus', () => {
+  it('moves focus to the morning report heading when a Three mornings card is used', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /^Flag only/ }))
+    const heading = screen.getByRole('heading', { level: 3, name: 'Morning report, 8:40 AM' })
+    expect(document.activeElement).toBe(heading)
+    expect(heading).toHaveAttribute('tabindex', '-1')
+    expect(screen.getByRole('radio', { name: 'Flag only' })).toBeChecked()
+  })
+
+  it('leaves focus on the radio when the setting is changed from the rail', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Flag only')
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Flag only' }))
   })
 })
 
@@ -526,7 +750,7 @@ describe('house rules', () => {
 async function tick(times = 1) {
   for (let i = 0; i < times; i += 1) {
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1300)
+      await vi.advanceTimersByTimeAsync(PLAY_INTERVAL_MS)
     })
   }
 }

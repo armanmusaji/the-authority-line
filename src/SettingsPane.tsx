@@ -1,9 +1,11 @@
 import { forwardRef } from 'react'
-import { AuthorityMark, SectionHead } from './Marks'
-import { product, settings, type PermissionId } from './scenario'
+import { AuthorityMark, SectionHead, StatusPill } from './Marks'
+import { product, settings, type Pill, type PermissionId } from './scenario'
 
 interface Props {
   value: PermissionId
+  /** The chosen setting's outcome. Shown under it on phone, one glance from the choice. */
+  pill: Pill
   /** True for a moment after "Change this setting", to show where you landed. */
   highlighted: boolean
   onChange: (permission: PermissionId) => void
@@ -16,11 +18,13 @@ interface Props {
  * description. Selection shows twice, as the filled knob and the outlined card.
  */
 export const SettingsPane = forwardRef<HTMLFieldSetElement, Props>(function SettingsPane(
-  { value, highlighted, onChange, radioRef },
+  { value, pill, highlighted, onChange, radioRef },
   fieldsetRef,
 ) {
   return (
     <div className="pane left">
+      {/* On desktop this column stays beside the log as the page scrolls. */}
+      <div className="left-inner">
       <SectionHead id="settings-heading" number={1}>
         {product.settingsHeading}
       </SectionHead>
@@ -53,6 +57,11 @@ export const SettingsPane = forwardRef<HTMLFieldSetElement, Props>(function Sett
                 <span className="opt-box">
                   <b id={nameId}>{setting.label}</b>
                   <small id={descId}>{setting.description}</small>
+                  {value === setting.id && (
+                    <span className="opt-pill">
+                      <StatusPill pill={pill} />
+                    </span>
+                  )}
                 </span>
               </label>
             )
@@ -71,6 +80,7 @@ export const SettingsPane = forwardRef<HTMLFieldSetElement, Props>(function Sett
           <p className="never-head">{product.offLimitsHeading}</p>
           <p>{product.offLimitsBody}</p>
         </div>
+      </div>
       </div>
     </div>
   )

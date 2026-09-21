@@ -179,6 +179,30 @@ main {
   cursor: progress;
 }
 
+/* Pause and Next: shown only while a night is playing or paused. */
+.play-steps {
+  display: inline-flex;
+  gap: var(--space-4);
+}
+
+.play-step {
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+  padding-inline: var(--space-8);
+  border-radius: var(--radius-pill);
+  border: var(--stroke-thin) solid var(--pg-ink);
+  background: transparent;
+  color: var(--pg-ink);
+  font-family: var(--font-product);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+/* The short placard copy exists for phones only. */
+.plac-short {
+  display: none;
+}
+
 .plac-note {
   font-family: var(--font-product);
   font-size: var(--text-meta);
@@ -217,7 +241,8 @@ main {
   border: var(--stroke-hair) solid var(--line);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-frame);
-  overflow: hidden;
+  /* clip, not hidden: hidden would make the frame a scroll box and stop the sticky column. */
+  overflow: clip;
 }
 
 .bar {
@@ -265,9 +290,22 @@ main {
 }
 
 .left {
-  gap: var(--space-7);
   background: var(--s2);
   border-right: var(--stroke-hair) solid var(--line);
+}
+
+.left-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+/* Desktop: the settings stay beside the log as the page scrolls, if the window is tall enough to hold them. */
+@media (min-width: 761px) and (min-height: 640px) {
+  .left-inner {
+    position: sticky;
+    top: var(--space-9);
+  }
 }
 
 .right {
@@ -390,6 +428,11 @@ fieldset.settings.live {
   display: block;
   color: var(--mute);
   font-size: var(--text-meta);
+}
+
+/* Phone only: the chosen setting's outcome, one glance from the choice. */
+.opt-pill {
+  display: none;
 }
 
 /*
@@ -814,6 +857,21 @@ dl.facts dt {
   .panes,
   .mornings {
     grid-template-columns: 1fr;
+  }
+
+  /* Phone: a shorter placard, so the settings reach the first screen. */
+  .plac-long,
+  .guide {
+    display: none;
+  }
+
+  .plac-short {
+    display: block;
+  }
+
+  .opt-pill {
+    display: flex;
+    margin-top: var(--space-3);
   }
 
   .left {

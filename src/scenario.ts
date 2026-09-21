@@ -89,6 +89,10 @@ export const placard = {
   byline: 'A design concept by Arman Musaji · Fictional brand, simulated agent',
   lede: "A tea company's email is queued for 6:00 AM. At 2:14 AM its AI agent notices the discount code expired at midnight. The marketer is asleep until 8:40. What should the agent be allowed to do?",
   ask: 'Same problem. Three settings. Three different mornings. Try all three.',
+  /* Phone only: the same situation in one sentence, and the task on its own. */
+  ledeShort:
+    "At 2:14 AM, an AI agent finds that the discount code in a tea company's 6:00 AM email has expired, and the marketer is asleep until 8:40.",
+  askShort: 'Try all three.',
   guideLabel: 'How to read this',
   guide: [
     'Set how far the agent may go.',
@@ -115,7 +119,7 @@ export const product = {
 }
 
 export const mornings = {
-  heading: 'Three mornings',
+  heading: 'Three mornings, as of 8:40 AM',
   emptyText: 'Not tried yet. Select to see this morning.',
   /** Announced to a screen reader so "tried" is not carried by the card's look alone. */
   viewedStateLabel: 'Viewed',
@@ -142,6 +146,15 @@ export const ui = {
   playProgressMessage: (settingLabel: string, step: number, total: number) =>
     `Playing with ${settingLabel}. Step ${step} of ${total}.`,
   playFinishedMessage: 'Night over. It is 8:40 AM. The morning report below is ready.',
+  playPausedMessage: (settingLabel: string, step: number, total: number) =>
+    `Paused with ${settingLabel}, at step ${step} of ${total}.`,
+  /* Spoken while the night plays: the action, not a step number. */
+  playStepAnnouncement: (time: string, title: string) => `${time}. ${title}.`,
+  /* Spoken once when the setting changes. */
+  settingAnnouncement: (settingLabel: string, pillText: string) => `${settingLabel}. ${pillText}.`,
+  pauseLabel: 'Pause',
+  resumeLabel: 'Resume',
+  nextLabel: 'Next',
   playAtOnceMessage: (settingLabel: string, total: number) =>
     `Night played with ${settingLabel}. All ${total} steps shown at once because reduced motion is on.`,
   /** Read by a screen reader so step state is never only a colour or an opacity. */
@@ -276,8 +289,9 @@ export const settings: Setting[] = [
         authority: 'approve, undo, or leave paused',
       },
     ],
-    limitIndex: 2,
-    limitLabel: "The agent's authority ended here. The rest waits for you.",
+    /* After the draft: preparing the fix was allowed, sending it was not. */
+    limitIndex: 3,
+    limitLabel: 'Its authority ended here. It could prepare the fix. It could not send it.',
     report: {
       pill: pillPaused,
       heading: 'Nothing went out. The decision is yours.',

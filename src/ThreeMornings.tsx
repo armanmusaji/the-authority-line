@@ -7,7 +7,10 @@ interface Props {
   onSelect: (permission: PermissionId) => void
 }
 
-/** Back in Arman's voice: the comparison the whole piece exists to make. */
+/**
+ * Back in Arman's voice: the comparison the whole piece exists to make. Each
+ * card is that setting's 8:40 outcome, fixed, not a mirror of later actions.
+ */
 export function ThreeMornings({ current, viewed, onSelect }: Props) {
   return (
     <section className="mornings-section" aria-labelledby="mornings-heading">

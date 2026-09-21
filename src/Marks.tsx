@@ -53,9 +53,20 @@ export function StatusPill({ pill }: { pill: Pill }) {
 }
 
 /** A numbered product section heading. The number ties it to the placard's reading guide. */
-export function SectionHead({ id, number, children }: { id: string; number: number; children: string }) {
+export function SectionHead({
+  id,
+  number,
+  children,
+  focusable = false,
+}: {
+  id: string
+  number: number
+  children: string
+  /** Lets focus be moved here, without adding it to the tab order. */
+  focusable?: boolean
+}) {
   return (
-    <h3 className="sech" id={id}>
+    <h3 className="sech" id={id} tabIndex={focusable ? -1 : undefined}>
       <span className="num" aria-hidden="true">
         {number}
       </span>

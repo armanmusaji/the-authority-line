@@ -8,7 +8,10 @@ interface Props {
   revealed: number
   /** True while a timed play is running, which outlines the log. */
   playing: boolean
-  /** The one polite live region on the page. Null when there is nothing to say. */
+  /**
+   * The visible status line. Hidden from screen readers, which hear the same
+   * news through the page's one live region instead.
+   */
   status: string | null
 }
 
@@ -64,8 +67,7 @@ export const ActivityLog = forwardRef<HTMLDivElement, Props>(function ActivityLo
         {product.logHeading}
       </SectionHead>
 
-      {/* One polite live region for the whole page. It carries play progress. */}
-      <p className="log-status" role="status">
+      <p className="log-status" aria-hidden="true">
         {status ?? ''}
       </p>
 

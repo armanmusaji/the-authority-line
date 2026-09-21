@@ -103,8 +103,36 @@ describe('the off-limits rule', () => {
   })
 })
 
+describe('pass 4 layout rules', () => {
+  const phone = block(styleCss, '@media (max-width: 760px)')
+
+  it('on phone, hides the long placard copy and the reading guide, and shows the short copy', () => {
+    expect(phone).toMatch(/\.plac-long,\s*\.guide\s*\{\s*display:\s*none/)
+    expect(block(phone, '.plac-short {')).toContain('display: block')
+  })
+
+  it('on phone, shows the pill under the chosen option. On desktop it stays hidden', () => {
+    expect(block(phone, '.opt-pill {')).toContain('display: flex')
+    expect(block(styleCss, '.opt-pill {')).toContain('display: none')
+    expect(block(styleCss, '.plac-short {')).toContain('display: none')
+  })
+
+  it('on desktop, keeps the settings column sticky, offset from the space scale', () => {
+    const desktop = block(styleCss, '@media (min-width: 761px) and (min-height: 640px)')
+    const inner = block(desktop, '.left-inner {')
+    expect(inner).toContain('position: sticky')
+    expect(inner).toMatch(/top: var\(--space-\d+\)/)
+  })
+
+  it('clips the product frame instead of hiding its overflow, so sticky can work', () => {
+    const frame = block(styleCss, '.frame {')
+    expect(frame).toContain('overflow: clip')
+    expect(frame).not.toContain('overflow: hidden')
+  })
+})
+
 describe('Style Shop standards', () => {
-  it.each(['.play {', '.btn {', '.m {', '.skip-link {'])('%s is at least 44px tall', (selector) => {
+  it.each(['.play {', '.play-step {', '.btn {', '.m {', '.skip-link {'])('%s is at least 44px tall', (selector) => {
     expect(block(styleCss, selector)).toContain('min-height: var(--target-min)')
   })
 

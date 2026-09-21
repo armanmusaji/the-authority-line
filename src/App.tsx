@@ -22,23 +22,25 @@ import {
   revealedSteps,
   stepCount,
 } from './reducer'
+import { HIGHLIGHT_MS, PLAY_INTERVAL_MS } from './timing'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
-/** The mockup's cadence: slow enough to read, quick enough to sit through. */
-const PLAY_INTERVAL_MS = 1300
-/** How long the settings group stays outlined after "Change this setting". */
-const HIGHLIGHT_MS = 1800
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState)
   const [settingsHighlighted, setSettingsHighlighted] = useState(false)
   /** Bumped by every report action so focus moves to the result line each time. */
   const [focusTick, setFocusTick] = useState(0)
+  /** Bumped by a Three mornings card, so focus moves to the report it opened. */
+  const [reportFocusTick, setReportFocusTick] = useState(0)
 
   const reducedMotion = usePrefersReducedMotion()
   const logRef = useRef<HTMLDivElement>(null)
   const fieldsetRef = useRef<HTMLFieldSetElement>(null)
   const resultRef = useRef<HTMLParagraphElement>(null)
+  const playRef = useRef<HTMLButtonElement>(null)
+  /** True while focus sits on Pause or Next, which vanish when the night ends. */
+  const focusInPlaySteps = useRef(false)
   const radios = useRef(new Map<PermissionId, HTMLInputElement | null>())
 
   const setting = getSetting(state.permission)
@@ -52,14 +54,38 @@ export default function App() {
     [],
   )
 
-  /* The only clock in the app, deliberately outside the reducer. */
+  /* The only clock in the app, deliberately outside the reducer. It waits while paused. */
   useEffect(() => {
-    if (!state.playing) return
+    if (!state.playing || state.paused) return
     const id = window.setTimeout(() => {
       dispatch(state.playStep >= total ? { type: 'finishPlay' } : { type: 'advancePlay' })
     }, PLAY_INTERVAL_MS)
     return () => window.clearTimeout(id)
-  }, [state.playing, state.playStep, total])
+  }, [state.playing, state.paused, state.playStep, total])
+
+  /* Any focus outside Pause and Next clears the flag. */
+  useEffect(() => {
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as Element | null
+      if (!target?.closest?.('.play-steps')) focusInPlaySteps.current = false
+    }
+    document.addEventListener('focusin', onFocusIn)
+    return () => document.removeEventListener('focusin', onFocusIn)
+  }, [])
+
+  /* When the night ends, Pause and Next go. If focus was on them, hand it back to Play. */
+  useEffect(() => {
+    if (state.playing) return
+    const lost = !document.activeElement || document.activeElement === document.body
+    if (focusInPlaySteps.current && lost) playRef.current?.focus()
+    focusInPlaySteps.current = false
+  }, [state.playing])
+
+  /* A Three mornings card opens that morning, so focus goes to its report. */
+  useEffect(() => {
+    if (reportFocusTick === 0) return
+    document.getElementById('report-heading')?.focus()
+  }, [reportFocusTick])
 
   /* Required: after Approve, Undo, Redo the focus lands on the result line. */
   useEffect(() => {
@@ -78,12 +104,26 @@ export default function App() {
     return resultMessage(state)
   }, [state])
 
+  /* The visible line in the log. Screen readers get the announcement below instead. */
   const playStatus = useMemo(() => {
+    if (state.playing && state.paused) return ui.playPausedMessage(setting.label, state.playStep, total)
     if (state.playing) return ui.playProgressMessage(setting.label, state.playStep, total)
     if (state.lastPlay === 'timed') return ui.playFinishedMessage
     if (state.lastPlay === 'at-once') return ui.playAtOnceMessage(setting.label, total)
     return null
-  }, [state.playing, state.playStep, state.lastPlay, setting.label, total])
+  }, [state.playing, state.paused, state.playStep, state.lastPlay, setting.label, total])
+
+  /* What the page's one live region says: the step being played, or the setting just picked. */
+  const announcement = useMemo(() => {
+    if (state.playing) {
+      const step = setting.steps[state.playStep - 1]
+      return step ? ui.playStepAnnouncement(step.time, step.title) : ''
+    }
+    if (state.lastPlay === 'timed') return ui.playFinishedMessage
+    if (state.lastPlay === 'at-once') return ui.playAtOnceMessage(setting.label, total)
+    if (state.settingChanged) return ui.settingAnnouncement(setting.label, report.pill.text)
+    return ''
+  }, [state.playing, state.playStep, state.lastPlay, state.settingChanged, setting, total, report])
 
   const playLabel = state.playing
     ? ui.playButtonProgress(state.playStep, total)
@@ -93,6 +133,21 @@ export default function App() {
 
   const handleSelect = useCallback((permission: PermissionId) => {
     dispatch({ type: 'setPermission', permission })
+  }, [])
+
+  const handleCardSelect = useCallback((permission: PermissionId) => {
+    dispatch({ type: 'setPermission', permission })
+    setReportFocusTick((tick) => tick + 1)
+  }, [])
+
+  const handlePauseToggle = useCallback(() => {
+    dispatch(state.paused ? { type: 'resumePlay' } : { type: 'pausePlay' })
+  }, [state.paused])
+
+  const handleNext = useCallback(() => dispatch({ type: 'nextStep' }), [])
+
+  const handlePlayStepsFocus = useCallback(() => {
+    focusInPlaySteps.current = true
   }, [])
 
   const handlePlay = useCallback(() => {
@@ -135,7 +190,16 @@ export default function App() {
 
       <div className="page">
         <main id="main" aria-label={ui.mainLabel}>
-          <Placard playLabel={playLabel} playing={state.playing} onPlay={handlePlay} />
+          <Placard
+            playLabel={playLabel}
+            inProgress={state.playing}
+            paused={state.paused}
+            onPlay={handlePlay}
+            onPauseToggle={handlePauseToggle}
+            onNext={handleNext}
+            playRef={playRef}
+            onControlsFocus={handlePlayStepsFocus}
+          />
 
           <p className="tagline">{placard.tagline}</p>
 
@@ -152,6 +216,7 @@ export default function App() {
               <SettingsPane
                 ref={fieldsetRef}
                 value={state.permission}
+                pill={report.pill}
                 highlighted={settingsHighlighted}
                 onChange={handleSelect}
                 radioRef={radioRef}
@@ -179,8 +244,13 @@ export default function App() {
           <ThreeMornings
             current={state.permission}
             viewed={state.viewed}
-            onSelect={handleSelect}
+            onSelect={handleCardSelect}
           />
+
+          {/* The page's one polite live region. */}
+          <p className="visually-hidden" role="status">
+            {announcement}
+          </p>
         </main>
 
         <footer className="site-foot">

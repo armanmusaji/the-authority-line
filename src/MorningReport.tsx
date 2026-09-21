@@ -22,7 +22,7 @@ export const MorningReport = forwardRef<HTMLParagraphElement, Props>(function Mo
 ) {
   return (
     <div className="report-section">
-      <SectionHead id="report-heading" number={3}>
+      <SectionHead id="report-heading" number={3} focusable>
         {product.reportHeading}
       </SectionHead>
 

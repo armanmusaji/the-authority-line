@@ -117,6 +117,58 @@ describe('play progress', () => {
   })
 })
 
+describe('pause, resume and next', () => {
+  it('pause freezes the clock step, resume lets it run again', () => {
+    const playing = reducer(initialState, { type: 'startPlay' })
+    const paused = reducer(playing, { type: 'pausePlay' })
+    expect(paused.paused).toBe(true)
+    expect(paused.playing).toBe(true)
+    expect(reducer(paused, { type: 'advancePlay' })).toBe(paused)
+    expect(revealedSteps(paused)).toBe(1)
+
+    const resumed = reducer(paused, { type: 'resumePlay' })
+    expect(resumed.paused).toBe(false)
+    expect(reducer(resumed, { type: 'advancePlay' }).playStep).toBe(2)
+  })
+
+  it('next steps by hand whether paused or running, and past the end finishes the night', () => {
+    let state = run(initialState, [{ type: 'startPlay' }, { type: 'pausePlay' }])
+    for (let i = 2; i <= stepCount('act-alone'); i += 1) {
+      state = reducer(state, { type: 'nextStep' })
+      expect(state.playStep).toBe(i)
+      expect(state.paused).toBe(true)
+    }
+    state = reducer(state, { type: 'nextStep' })
+    expect(state.playing).toBe(false)
+    expect(state.paused).toBe(false)
+    expect(state.lastPlay).toBe('timed')
+  })
+
+  it('ignores pause, resume and next when no night is playing', () => {
+    expect(reducer(initialState, { type: 'pausePlay' })).toBe(initialState)
+    expect(reducer(initialState, { type: 'resumePlay' })).toBe(initialState)
+    expect(reducer(initialState, { type: 'nextStep' })).toBe(initialState)
+  })
+
+  it('a new play or a new setting always starts unpaused', () => {
+    const paused = run(initialState, [{ type: 'startPlay' }, { type: 'pausePlay' }])
+    expect(reducer(paused, { type: 'startPlay' }).paused).toBe(false)
+    expect(reducer(paused, { type: 'setPermission', permission: 'flag-only' }).paused).toBe(false)
+  })
+})
+
+describe('the setting-change announcement flag', () => {
+  it('is off at load, on after a change, and off again after any other action', () => {
+    expect(initialState.settingChanged).toBe(false)
+    const changed = select('ask-first')
+    expect(changed.settingChanged).toBe(true)
+    expect(reducer(changed, { type: 'approve' }).settingChanged).toBe(false)
+    expect(reducer(changed, { type: 'undoEdit' }).settingChanged).toBe(false)
+    expect(reducer(changed, { type: 'startPlay' }).settingChanged).toBe(false)
+    expect(reducer(changed, { type: 'playAtOnce' }).settingChanged).toBe(false)
+  })
+})
+
 describe('Act alone and Flag only offer nothing to approve or undo', () => {
   it.each(['act-alone', 'flag-only'] as const)('%s', (id) => {
     const state = select(id)
@@ -188,7 +240,8 @@ describe('Ask first, undo then redo', () => {
       { type: 'undoEdit' },
       { type: 'redoEdit' },
     ])
-    expect({ ...twice, lastAction: null }).toEqual(pending)
+    /* Only the record of the last action and the one-off announcement differ. */
+    expect({ ...twice, lastAction: null, settingChanged: true }).toEqual(pending)
   })
 })
 

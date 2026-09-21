@@ -28,12 +28,16 @@ export interface DialState {
   lastAction: ActionId | null
   /** Settings the viewer has seen, in the order they first saw them. */
   viewed: PermissionId[]
-  /** True while a timed play is running. */
+  /** True while a play is in progress, running or paused. */
   playing: boolean
+  /** True while a play in progress is paused. The clock waits, the night stays half told. */
+  paused: boolean
   /** How many steps are revealed while playing. 0 when not playing. */
   playStep: number
   /** How the last finished play ran, or null if the night has never been played. */
   lastPlay: PlayMode | null
+  /** True right after the viewer picks a setting, so the change can be announced once. */
+  settingChanged: boolean
 }
 
 export type DialAction =
@@ -41,6 +45,9 @@ export type DialAction =
   | { type: 'startPlay' }
   | { type: 'advancePlay' }
   | { type: 'finishPlay' }
+  | { type: 'pausePlay' }
+  | { type: 'resumePlay' }
+  | { type: 'nextStep' }
   | { type: 'playAtOnce' }
   | { type: 'approve' }
   | { type: 'undoEdit' }
@@ -59,8 +66,10 @@ export const initialState: DialState = {
   lastAction: null,
   viewed: [DEFAULT_PERMISSION],
   playing: false,
+  paused: false,
   playStep: 0,
   lastPlay: null,
+  settingChanged: false,
 }
 
 export function stepCount(permission: PermissionId): number {
@@ -126,16 +135,19 @@ export function reducer(state: DialState, action: DialAction): DialState {
         lastAction: null,
         viewed: addViewed(state.viewed, action.permission),
         playing: false,
+        paused: false,
         playStep: 0,
         lastPlay: null,
+        settingChanged: true,
       }
     }
 
     case 'startPlay':
-      return { ...state, playing: true, playStep: 1, lastPlay: null }
+      return { ...state, playing: true, paused: false, playStep: 1, lastPlay: null, settingChanged: false }
 
+    /** The clock's step. It never moves a paused night. */
     case 'advancePlay': {
-      if (!state.playing) return state
+      if (!state.playing || state.paused) return state
       const next = Math.min(state.playStep + 1, stepCount(state.permission))
       if (next === state.playStep) return state
       return { ...state, playStep: next }
@@ -143,27 +155,46 @@ export function reducer(state: DialState, action: DialAction): DialState {
 
     case 'finishPlay': {
       if (!state.playing) return state
-      return { ...state, playing: false, playStep: 0, lastPlay: 'timed' }
+      return { ...state, playing: false, paused: false, playStep: 0, lastPlay: 'timed' }
+    }
+
+    case 'pausePlay': {
+      if (!state.playing || state.paused) return state
+      return { ...state, paused: true }
+    }
+
+    case 'resumePlay': {
+      if (!state.playing || !state.paused) return state
+      return { ...state, paused: false }
+    }
+
+    /** The viewer's step, paused or not. Past the last step it ends the night. */
+    case 'nextStep': {
+      if (!state.playing) return state
+      if (state.playStep >= stepCount(state.permission)) {
+        return { ...state, playing: false, paused: false, playStep: 0, lastPlay: 'timed' }
+      }
+      return { ...state, playStep: state.playStep + 1 }
     }
 
     /** The reduced motion path: no timed reveal, every step at once. */
     case 'playAtOnce':
-      return { ...state, playing: false, playStep: 0, lastPlay: 'at-once' }
+      return { ...state, playing: false, paused: false, playStep: 0, lastPlay: 'at-once', settingChanged: false }
 
     case 'approve': {
       if (!canApprove(state)) return state
-      return { ...state, approved: true, lastAction: 'approve' }
+      return { ...state, approved: true, lastAction: 'approve', settingChanged: false }
     }
 
     /** Undo restores the original draft. The campaign stays paused either way. */
     case 'undoEdit': {
       if (!canUndo(state)) return state
-      return { ...state, draftEdited: false, undone: true, lastAction: 'undo' }
+      return { ...state, draftEdited: false, undone: true, lastAction: 'undo', settingChanged: false }
     }
 
     case 'redoEdit': {
       if (!canRedo(state)) return state
-      return { ...state, draftEdited: true, undone: false, lastAction: 'redo' }
+      return { ...state, draftEdited: true, undone: false, lastAction: 'redo', settingChanged: false }
     }
 
     default:

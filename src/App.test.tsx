@@ -12,9 +12,11 @@ const ACT = getSetting('act-alone')
 const ASK = getSetting('ask-first')
 const FLAG = getSetting('flag-only')
 
-function setReducedMotion(reduce: boolean) {
+function setReducedMotion(reduce: boolean, phone = false) {
   window.matchMedia = ((query: string) => ({
-    matches: reduce && query.includes('prefers-reduced-motion'),
+    matches:
+      (reduce && query.includes('prefers-reduced-motion')) ||
+      (phone && query.includes('max-width: 760px')),
     media: query,
     onchange: null,
     addListener: () => {},
@@ -367,7 +369,7 @@ describe('authority marks and their key', () => {
     await selectSetting(user, label)
 
     const key = screen.getByTestId('mark-key')
-    const listed = [...key.querySelectorAll(':scope > span')].map((s) => s.getAttribute('data-kind'))
+    const listed = [...key.querySelectorAll('.key-items > span')].map((s) => s.getAttribute('data-kind'))
     expect(listed).toEqual(expected)
 
     const onScreen = [...new Set([...document.querySelectorAll('li.step')].map((li) => li.getAttribute('data-mark')))]
@@ -632,6 +634,124 @@ describe('pass 4: card focus', () => {
     render(<App />)
     await selectSetting(user, 'Flag only')
     expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Flag only' }))
+  })
+})
+
+describe('pass 5: the draft step under Ask first', () => {
+  it('is inside the agent\'s authority: solid square, "prepare a fix as a draft"', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+
+    const draft = ASK.steps.find((s) => s.id === 'draft')!
+    expect(draft.mark).toBe('within')
+    expect(screen.getByText('Within its authority: prepare a fix as a draft')).toBeInTheDocument()
+    const row = screen.getByText('Prepares the fix as a draft').closest('li')!
+    expect(row).toHaveAttribute('data-mark', 'within')
+    expect(row).not.toHaveClass('after')
+  })
+
+  it('leaves the hold below the line as needing your approval, so the key still shows it', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+
+    const hold = screen.getByText('Holds. Nothing sends.').closest('li')!
+    expect(hold).toHaveAttribute('data-mark', 'needs-approval')
+    expect(hold).toHaveClass('after')
+    expect(screen.getByText('Needs your approval: still waiting for you')).toBeInTheDocument()
+    expect(marksIn('ask-first')).toEqual(['within', 'needs-approval', 'human'])
+  })
+})
+
+describe('pass 5: the key', () => {
+  it('carries a visible "Key" label inside its box', () => {
+    render(<App />)
+    const key = screen.getByTestId('mark-key')
+    expect(key.querySelector('.key-label')).toHaveTextContent(/^Key$/)
+    expect(key.querySelector('.key-items')).toBeInTheDocument()
+  })
+})
+
+describe('pass 5: phone scroll to the night', () => {
+  let scrolled: Element[] = []
+  const nightScrolls = () => scrolled.filter((el) => el.id === 'log-heading')
+
+  beforeEach(() => {
+    scrolled = []
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this)
+    }) as unknown as typeof Element.prototype.scrollIntoView
+  })
+
+  afterEach(() => {
+    delete (Element.prototype as Partial<Element>).scrollIntoView
+  })
+
+  it('does not scroll on initial render', () => {
+    setReducedMotion(false, true)
+    render(<App />)
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it('scrolls the Overnight heading into view, smoothly, when a phone visitor taps a setting', async () => {
+    setReducedMotion(false, true)
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+
+    expect(nightScrolls()).toHaveLength(1)
+    expect(Element.prototype.scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'smooth', block: 'start' })
+    /* Focus stays on the choice. The announcement still fires. */
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Ask first' }))
+    expect(screen.getByRole('status')).toHaveTextContent('Ask first. Paused, waiting for you.')
+  })
+
+  it('jumps instead of gliding under reduced motion', async () => {
+    setReducedMotion(true, true)
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Flag only')
+    expect(Element.prototype.scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'auto', block: 'start' })
+  })
+
+  it('does not scroll when a Three mornings card changes the setting', async () => {
+    setReducedMotion(false, true)
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /^Flag only/ }))
+    expect(nightScrolls()).toHaveLength(0)
+  })
+
+  it('does not scroll on desktop', async () => {
+    setReducedMotion(false, false)
+    const user = userEvent.setup()
+    render(<App />)
+    await selectSetting(user, 'Ask first')
+    expect(nightScrolls()).toHaveLength(0)
+  })
+
+  it('does not scroll when the setting is changed from the keyboard', async () => {
+    setReducedMotion(false, true)
+    const user = userEvent.setup()
+    render(<App />)
+    const radio = screen.getByRole('radio', { name: 'Flag only' })
+    radio.focus()
+    await user.keyboard(' ')
+    expect(radio).toBeChecked()
+    expect(nightScrolls()).toHaveLength(0)
+  })
+})
+
+describe('pass 5: the question is back on phone', () => {
+  it('sits between the one-sentence scenario and "Try all three."', () => {
+    render(<App />)
+    const scenario = screen.getByText(placard.ledeShort)
+    const question = screen.getByText('What should the agent be allowed to do?', { selector: '.plac-short' })
+    const task = screen.getByText('Try all three.')
+    expect(question).toHaveClass('plac-question', 'plac-short')
+    expect(scenario.nextElementSibling).toBe(question)
+    expect(question.nextElementSibling?.nextElementSibling).toBe(task)
   })
 })
 

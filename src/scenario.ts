@@ -92,6 +92,7 @@ export const placard = {
   /* Phone only: the same situation in one sentence, and the task on its own. */
   ledeShort:
     "At 2:14 AM, an AI agent finds that the discount code in a tea company's 6:00 AM email has expired, and the marketer is asleep until 8:40.",
+  question: 'What should the agent be allowed to do?',
   askShort: 'Try all three.',
   guideLabel: 'How to read this',
   guide: [
@@ -171,6 +172,7 @@ export const ui = {
     schedule: 'Not the agent',
     human: 'You',
   } satisfies Record<MarkKind, string>,
+  keyLabel: 'Key',
   /** The key under the log, listing only the marks in the current night. */
   markKey: {
     within: 'Agent did it',
@@ -271,8 +273,8 @@ export const settings: Setting[] = [
         id: 'draft',
         time: '2:15 AM',
         title: 'Prepares the fix as a draft',
-        mark: 'needs-approval',
-        authority: 'change what a campaign sends',
+        mark: 'within',
+        authority: 'prepare a fix as a draft',
       },
       {
         id: 'hold',

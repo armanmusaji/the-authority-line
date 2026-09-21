@@ -22,7 +22,7 @@ import {
   revealedSteps,
   stepCount,
 } from './reducer'
-import { HIGHLIGHT_MS, PLAY_INTERVAL_MS } from './timing'
+import { HIGHLIGHT_MS, PHONE_QUERY, PLAY_INTERVAL_MS } from './timing'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
 
@@ -33,6 +33,10 @@ export default function App() {
   const [focusTick, setFocusTick] = useState(0)
   /** Bumped by a Three mornings card, so focus moves to the report it opened. */
   const [reportFocusTick, setReportFocusTick] = useState(0)
+  /** Bumped when a phone visitor taps a setting, so the night below scrolls into view. */
+  const [nightScrollTick, setNightScrollTick] = useState(0)
+  /** How the last setting change was made. Keyboard changes never scroll the page. */
+  const lastInputKind = useRef<'pointer' | 'keyboard'>('pointer')
 
   const reducedMotion = usePrefersReducedMotion()
   const logRef = useRef<HTMLDivElement>(null)
@@ -80,6 +84,18 @@ export default function App() {
     if (focusInPlaySteps.current && lost) playRef.current?.focus()
     focusInPlaySteps.current = false
   }, [state.playing])
+
+  /*
+    Phone only: after a tap on a setting, bring the night into view so the change
+    is visible. Focus stays on the radio. Runs after render, never on load.
+  */
+  useEffect(() => {
+    if (nightScrollTick === 0) return
+    document.getElementById('log-heading')?.scrollIntoView?.({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }, [nightScrollTick, reducedMotion])
 
   /* A Three mornings card opens that morning, so focus goes to its report. */
   useEffect(() => {
@@ -133,6 +149,13 @@ export default function App() {
 
   const handleSelect = useCallback((permission: PermissionId) => {
     dispatch({ type: 'setPermission', permission })
+    const phone = window.matchMedia?.(PHONE_QUERY).matches ?? false
+    /* Arrowing through the radios must not scroll the focused one off screen. */
+    if (phone && lastInputKind.current === 'pointer') setNightScrollTick((tick) => tick + 1)
+  }, [])
+
+  const handleInputKind = useCallback((kind: 'pointer' | 'keyboard') => {
+    lastInputKind.current = kind
   }, [])
 
   const handleCardSelect = useCallback((permission: PermissionId) => {
@@ -220,6 +243,7 @@ export default function App() {
                 highlighted={settingsHighlighted}
                 onChange={handleSelect}
                 radioRef={radioRef}
+                onInputKind={handleInputKind}
               />
 
               <div className="pane right">

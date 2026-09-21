@@ -131,6 +131,20 @@ describe('pass 4 layout rules', () => {
   })
 })
 
+describe('pass 5: the key box', () => {
+  it('is outlined with the line token and a small radius from the scale', () => {
+    const key = block(styleCss, '.key {')
+    expect(key).toContain('solid var(--line)')
+    expect(key).toMatch(/border-radius: var\(--radius-(xs|sm)\)/)
+  })
+
+  it('labels itself in the small capitals style, and keeps its distance from the report', () => {
+    const label = block(styleCss, '.key-label {')
+    expect(label).toContain('text-transform: uppercase')
+    expect(block(styleCss, '.report-section {')).toMatch(/margin-top: var\(--space-\d+\)/)
+  })
+})
+
 describe('Style Shop standards', () => {
   it.each(['.play {', '.play-step {', '.btn {', '.m {', '.skip-link {'])('%s is at least 44px tall', (selector) => {
     expect(block(styleCss, selector)).toContain('min-height: var(--target-min)')

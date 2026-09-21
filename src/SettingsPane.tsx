@@ -10,6 +10,8 @@ interface Props {
   highlighted: boolean
   onChange: (permission: PermissionId) => void
   radioRef: (id: PermissionId) => (node: HTMLInputElement | null) => void
+  /** Reports whether the next change comes from a tap or click, or from the keyboard. */
+  onInputKind: (kind: 'pointer' | 'keyboard') => void
 }
 
 /**
@@ -18,7 +20,7 @@ interface Props {
  * description. Selection shows twice, as the filled knob and the outlined card.
  */
 export const SettingsPane = forwardRef<HTMLFieldSetElement, Props>(function SettingsPane(
-  { value, pill, highlighted, onChange, radioRef },
+  { value, pill, highlighted, onChange, radioRef, onInputKind },
   fieldsetRef,
 ) {
   return (
@@ -33,6 +35,8 @@ export const SettingsPane = forwardRef<HTMLFieldSetElement, Props>(function Sett
         className={highlighted ? 'settings live' : 'settings'}
         ref={fieldsetRef}
         id="settings"
+        onPointerDown={() => onInputKind('pointer')}
+        onKeyDown={() => onInputKind('keyboard')}
       >
         <legend>{product.legend}</legend>
 

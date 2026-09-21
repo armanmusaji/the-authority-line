@@ -141,6 +141,7 @@ main {
 }
 
 .plac-lede,
+.plac-question,
 .plac-ask {
   margin-top: var(--space-5);
   font-size: var(--text-lede);
@@ -480,6 +481,11 @@ fieldset.settings.live {
   outline: none;
 }
 
+/* Leaves a little room above the Overnight heading when the phone scrolls to it. */
+.log .sech {
+  scroll-margin-top: var(--space-6);
+}
+
 /* Outlined while the night plays, to pull the eye here. */
 .log.live {
   outline: var(--focus-width) solid var(--tea);
@@ -622,15 +628,32 @@ fieldset.settings.live {
   height: var(--mark-key-picto);
 }
 
+/* The key: boxed and labelled, so it reads as a legend and not as another step. */
 .key {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-8);
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border: var(--stroke-hair) solid var(--line);
+  border-radius: var(--radius-sm);
   font-size: var(--text-key);
   color: var(--mute);
 }
 
-.key > span {
+.key-label {
+  font-size: var(--text-lbl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.key-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-8);
+}
+
+.key-items > span {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
@@ -642,6 +665,7 @@ fieldset.settings.live {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  margin-top: var(--space-6);
 }
 
 .morning {

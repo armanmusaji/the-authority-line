@@ -80,12 +80,15 @@ export const ActivityLog = forwardRef<HTMLDivElement, Props>(function ActivityLo
         key is hidden too. It lists only the marks present in this night.
       */}
       <div className="key" aria-hidden="true" data-testid="mark-key">
-        {marksIn(permission).map((kind) => (
-          <span key={kind} data-kind={kind}>
-            <AuthorityMark kind={kind} size="key" />
-            {ui.markKey[kind]}
-          </span>
-        ))}
+        <p className="key-label">{ui.keyLabel}</p>
+        <div className="key-items">
+          {marksIn(permission).map((kind) => (
+            <span key={kind} data-kind={kind}>
+              <AuthorityMark kind={kind} size="key" />
+              {ui.markKey[kind]}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   )

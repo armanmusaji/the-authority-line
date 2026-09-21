@@ -34,6 +34,7 @@ export function Placard({
         {/* Desktop tells the whole situation. Phone keeps one sentence and the task. */}
         <p className="plac-lede plac-long">{placard.lede}</p>
         <p className="plac-lede plac-short">{placard.ledeShort}</p>
+        <p className="plac-question plac-short">{placard.question}</p>
         <p className="plac-ask plac-long">{placard.ask}</p>
         <p className="plac-ask plac-short">{placard.askShort}</p>
 

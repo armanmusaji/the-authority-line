@@ -1,0 +1,224 @@
+/*
+  Design tokens for The Authority Line, taken from the approved render at
+  ../../assets/visual-direction-v4.html. Every colour in styles.css comes from
+  here. Light is the default. Dark follows the system, and a data-theme
+  attribute on <html> can force either one, although the app ships no toggle.
+
+  Colour rules Arman set, which these values encode:
+  - Warm means cost and nothing else. --sun is used once, for the cost stripe.
+  - The authority line is a boundary, not a warning, so --limit is neutral ink.
+  - The morning report tint is cool daylight, so it never reads as caution.
+  - Status never relies on colour alone. Every pill carries a symbol and words.
+*/
+
+:root {
+  color-scheme: light;
+
+  /* Page ground: the placard layer, Arman's voice */
+  --pg: #ECEEF0;
+  --pg-ink: #15191C;
+  --pg-mute: #566068;
+  --pg-line: #C5CCD1;
+  --pg-note: #3D4B7A; /* focus ring and the placard's rule */
+
+  /* Product surfaces: Halfmoon Tea's own tool */
+  --s: #FFFFFF;
+  --s2: #F5F8F6;
+  --ink: #15191C;
+  --mute: #566068;
+  --line: #D6DDD9;
+
+  /* Tea green: the product's brand and its selected state */
+  --tea: #22503F;
+  --tea-soft: #E3EEE8;
+  --on-tea: #FFFFFF;
+  --bar: #22503F;
+  --on-bar: #FFFFFF;
+
+  /* The authority line: neutral ink, the heaviest rule in the product */
+  --limit: #15191C;
+  --limit-soft: #E9EDEB;
+
+  /* Morning report: cool daylight. --sun is the single warm accent, for cost. */
+  --sun: #B45A09;
+  --morning: #EDF2F8;
+  --morning-line: #B9C9DC;
+
+  /* Status pills describe the email: sent on time, paused, sent broken */
+  --ok: #1B6A48;
+  --ok-bg: #DFF1E7;
+  --wait: #7A5200;
+  --wait-bg: #FBEBC8;
+  --bad: #9D2A1D;
+  --bad-bg: #F9E0DB;
+
+  /* Frame shadow, tinted toward the tea green */
+  --shadow-frame: 0 18px 40px -26px rgb(10 30 20 / 0.5);
+
+  /* Type */
+  --font-placard: "Source Serif 4 Variable", "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-product: "Albert Sans Variable", "Albert Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Sizes by role. These are the render's sizes, each given one job. */
+  --text-set: 11px;       /* tagline */
+  --text-lbl: 11.5px;     /* before and after labels */
+  --text-caps: 12px;      /* byline, guide numbers */
+  --text-key: 12.5px;     /* mark key, pills */
+  --text-sech: 13px;      /* product section heads, secondary lines, result line */
+  --text-meta: 13.5px;    /* times, breadcrumb, cells, option notes, off-limits rule */
+  --text-card: 14px;      /* Three mornings summaries */
+  --text-step: 14.5px;    /* log step titles */
+  --text-body: 15px;      /* product body */
+  --text-guide: 15.5px;   /* reading guide */
+  --text-legend: 16px;    /* settings question */
+  --text-option: 16.5px;  /* setting names */
+  --text-lede: 17px;      /* placard paragraphs */
+  --text-ask: 20px;       /* "Try all three" */
+  --text-h2: 22px;        /* Three mornings */
+  --text-h4: 23px;        /* morning report headline */
+  --text-hero: 42px;      /* title */
+
+  --leading-hero: 1.02;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-hero: -0.015em;
+  --tracking-label: 0.04em;
+  --tracking-mono: 0.06em;
+  --tracking-caps: 0.08em;
+
+  /* Space: one scale, used for every gap, padding and margin */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 14px;
+  --space-8: 16px;
+  --space-9: 20px;
+  --space-10: 24px;
+  --space-11: 48px;
+  --space-12: 72px;
+
+  /* Radius */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-pill: 999px;
+
+  /* Strokes */
+  --stroke-hair: 1px;
+  --stroke-thin: 1.5px;
+  --stroke-mark: 2.5px;
+  --stroke-knob: 3px;
+  --stroke-cost: 4px;
+  --stroke-limit: 4px;
+  --stroke-accent: 4px;
+  --stroke-select: 3px;
+  --stroke-key: 2px;
+  --focus-width: 3px;
+  --focus-offset: 2px;
+
+  /* Sizes */
+  --target-min: 44px;
+  --knob: 34px;
+  --knob-ring: 5px;
+  --opt-min: 56px;
+  --hatch-gap: 7px;
+  --hatch-line: 1px;
+  --rail-track: 6px;
+  --rail-inset: 48px;
+  --mark: 20px;
+  --mark-picto: 22px;
+  --mark-key: 12px;
+  --mark-key-picto: 14px;
+  --guide-num: 22px;
+  --moon: 16px;
+  --col-mark: 26px;
+  --col-time: 70px;
+  --page-max: 1080px;
+  --measure-placard: 56ch;
+
+  /* Motion. Play the night is the only movement, and it has a reduced path. */
+  --motion-base: 300ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --pg: #101315;
+    --pg-ink: #E7EBEE;
+    --pg-mute: #98A3AB;
+    --pg-line: #2E363B;
+    --pg-note: #A9B6E6;
+    --s: #161C19;
+    --s2: #1B231F;
+    --ink: #E7EBEE;
+    --mute: #9AA6A0;
+    --line: #2C3832;
+    --tea: #8FD0B5;
+    --tea-soft: #173428;
+    --on-tea: #0E1613;
+    --bar: #1D4336;
+    --on-bar: #E9F4EF;
+    --limit: #E7EBEE;
+    --limit-soft: #242D29;
+    --sun: #F0A55A;
+    --morning: #18202B;
+    --morning-line: #35475E;
+    --ok: #7FD4AB;
+    --ok-bg: #12382A;
+    --wait: #F2C76B;
+    --wait-bg: #3D2E08;
+    --bad: #FF9D8F;
+    --bad-bg: #431A14;
+    --shadow-frame: 0 18px 40px -26px rgb(0 0 0 / 0.8);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --pg: #101315;
+  --pg-ink: #E7EBEE;
+  --pg-mute: #98A3AB;
+  --pg-line: #2E363B;
+  --pg-note: #A9B6E6;
+  --s: #161C19;
+  --s2: #1B231F;
+  --ink: #E7EBEE;
+  --mute: #9AA6A0;
+  --line: #2C3832;
+  --tea: #8FD0B5;
+  --tea-soft: #173428;
+  --on-tea: #0E1613;
+  --bar: #1D4336;
+  --on-bar: #E9F4EF;
+  --limit: #E7EBEE;
+  --limit-soft: #242D29;
+  --sun: #F0A55A;
+  --morning: #18202B;
+  --morning-line: #35475E;
+  --ok: #7FD4AB;
+  --ok-bg: #12382A;
+  --wait: #F2C76B;
+  --wait-bg: #3D2E08;
+  --bad: #FF9D8F;
+  --bad-bg: #431A14;
+  --shadow-frame: 0 18px 40px -26px rgb(0 0 0 / 0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-base: 0ms;
+  }
+}

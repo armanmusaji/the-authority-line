@@ -1,0 +1,43 @@
+CLAUDE CODE HANDOFF: The Autonomy Dial, build pass 1 (structure and logic)
+
+You are building a small portfolio prototype for Arman Musaji, a senior product designer. Work only inside this folder:
+/Users/armanmusaji/Documents/Codex/ai-portfolio/projects/01-autonomy-dial/
+
+FIRST: read these files in full before writing code.
+- /Users/armanmusaji/Documents/Codex/ai-portfolio/START_HERE.md
+- /Users/armanmusaji/Documents/Codex/ai-portfolio/projects/01-autonomy-dial/BRIEF.md
+BRIEF.md is the source of truth for scope. If this prompt and BRIEF.md differ, BRIEF.md wins. Do not touch the sibling folder job-search-os.
+
+WHAT IT IS
+A single-page, deterministic simulation. One fictional brand (Halfmoon Tea), one queued email campaign, one incident (an expired offer code found at 2:14 AM), one permission with three positions: Act alone, Ask first, Flag only. The viewer picks a position, replays the night step by step, and sees a "While you were away" return screen that differs per position. A locked row states the agent may never create or change a discount. No backend, no LLM calls, no routing, no auth.
+
+THIS PASS: structure and logic only
+1. Scaffold in ./app with Vite, React, TypeScript. No UI component library. Initialize git in ./app.
+2. One pure reducer holds all behavior. State: permission, stepIndex, draftEdited, approved, undone. Actions: setPermission (resets replay), stepForward, stepBack, replay, approve, undoEdit, redoEdit. Deterministic. No timers in the reducer.
+3. All scenario content (times, step text, authority labels, offer names, costs per position) in one data file, src/scenario.ts. Components contain no hardcoded scenario copy.
+4. Three regions as semantic sections with headings: Permission, Replay, While you were away.
+5. Undo exists in exactly one place: the draft edit under Ask first, with Redo after it. Under Act alone, state plainly that a send cannot be undone. Do not add undo anywhere else.
+6. Styling: plain CSS. Create src/tokens.css with custom properties for color, type, space, radius, motion, using neutral placeholder values. Keep layout minimal and readable. Arman will own the visual layer in the next pass, so do not invest in visual polish now.
+7. Footer text: "Self-initiated concept by Arman Musaji. Fictional brand, simulated agent and data."
+
+ACCESSIBILITY, REQUIRED IN THIS PASS
+- Permission is a native radio group inside a fieldset with a legend. Each option's cost is wired as its description.
+- Replay timeline is an ordered list. The current step is marked with aria-current and announced through one polite live region. Default is manual stepping. Autoplay is opt-in, pausable, and off when prefers-reduced-motion is set.
+- Everything works by keyboard. Visible focus styles. After Approve, Undo, or Redo, move focus to the status message confirming the result.
+- No information by color alone. Targets at least 24 by 24 CSS px. Skip link to main.
+
+TESTS
+- Vitest unit tests for the reducer covering all three positions end to end, the permission reset, and undo then redo.
+- A test that renders the app and runs axe-core with zero violations.
+
+RULES
+- Truth only: never add invented metrics about Arman, real company names, or real brand assets. Simulated numbers must be labeled simulated.
+- No em dashes anywhere in UI copy, comments, or docs.
+- Do not deploy or push to GitHub in this pass. Stop and report.
+
+WHEN DONE, REPORT
+- What you built and any place you deviated from BRIEF.md, with the reason.
+- Test results.
+- How to run it locally.
+- A list of open design questions for Arman, maximum five.
+Then append a short entry to /Users/armanmusaji/Documents/Codex/ai-portfolio/handoff/CURRENT_STATE.md under Done, and set "One exact next action" to: Arman reviews the unstyled build and starts the visual pass.

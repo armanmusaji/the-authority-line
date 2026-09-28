@@ -1,8 +1,8 @@
 /*
   The approved visual language, from ../../assets/visual-direction-v4.html.
-  Every colour, space, radius and size comes from tokens.css. Two voices:
-  the placard is Arman in serif on the page ground, the product is Halfmoon
-  Tea's own tool in sans on white.
+  Every colour, space, radius and size comes from tokens.css. One voice:
+  Halfmoon Tea's own tool in sans on white. The author layer lives on the
+  case study page, not inside the prototype.
 */
 
 *,
@@ -112,65 +112,23 @@ main {
   line-height: 1;
 }
 
-/* ---------- Placard: Arman's voice ---------- */
-
-.plac {
-  font-family: var(--font-placard);
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: var(--space-10);
-  align-items: end;
-}
-
-.plac h1 {
-  font-size: var(--text-hero);
-  line-height: var(--leading-hero);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-hero);
-  text-wrap: balance;
-}
-
-.plac-by {
-  margin-top: var(--space-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-caps);
-  font-weight: var(--weight-medium);
-  letter-spacing: var(--tracking-mono);
-  text-transform: uppercase;
-  color: var(--pg-mute);
-}
-
-.plac-lede,
-.plac-question,
-.plac-ask {
-  margin-top: var(--space-5);
-  font-size: var(--text-lede);
-  max-width: var(--measure-placard);
-}
-
-.plac-ask {
-  font-style: italic;
-  font-size: var(--text-ask);
-  line-height: var(--leading-tight);
-  text-wrap: balance;
-}
-
-.plac-controls {
-  margin-top: var(--space-8);
+.play-controls {
+  margin-left: auto;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4) var(--space-6);
+  gap: var(--space-2) var(--space-4);
   align-items: center;
+  justify-content: flex-end;
 }
 
-/* Play belongs to the placard, so it takes the placard's ink, not the product's green. */
+/* Play is a feature of the tool, so it takes the bar's colours. */
 .play {
   min-height: var(--target-min);
   padding-inline: var(--space-9);
   border-radius: var(--radius-pill);
-  border: var(--stroke-thin) solid var(--pg-ink);
-  background: var(--pg-ink);
-  color: var(--pg);
+  border: var(--stroke-thin) solid var(--on-bar);
+  background: var(--on-bar);
+  color: var(--bar);
   font-family: var(--font-product);
   font-weight: var(--weight-bold);
   cursor: pointer;
@@ -191,47 +149,19 @@ main {
   min-width: var(--target-min);
   padding-inline: var(--space-8);
   border-radius: var(--radius-pill);
-  border: var(--stroke-thin) solid var(--pg-ink);
+  border: var(--stroke-thin) solid var(--on-bar);
   background: transparent;
-  color: var(--pg-ink);
+  color: var(--on-bar);
   font-family: var(--font-product);
   font-weight: var(--weight-bold);
   cursor: pointer;
 }
 
-/* The short placard copy exists for phones only. */
-.plac-short {
-  display: none;
-}
-
-.plac-note {
+.play-note {
   font-family: var(--font-product);
   font-size: var(--text-meta);
-  color: var(--pg-mute);
-}
-
-.guide {
-  font-size: var(--text-guide);
-  border-left: var(--stroke-hair) solid var(--pg-ink);
-  padding-left: var(--space-7);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.guide li {
-  display: flex;
-  align-items: flex-start;
-}
-
-.tagline {
-  font-family: var(--font-mono);
-  font-size: var(--text-set);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  color: var(--pg-mute);
-  margin-bottom: calc(var(--space-6) * -1);
+  color: var(--on-bar);
+  opacity: 0.85;
 }
 
 /* ---------- Product: Halfmoon Tea's own tool ---------- */
@@ -869,28 +799,18 @@ dl.facts dt {
   color: var(--mute);
 }
 
-.site-foot {
-  font-size: var(--text-sech);
-  color: var(--pg-mute);
-}
-
 /* ---------- Narrow screens ---------- */
 
 @media (max-width: 760px) {
-  .plac,
-  .panes,
-  .mornings {
+  /* Phone: the replay control takes its own row under the crumb. */
+  .play-controls {
+    margin-left: 0;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+
+  .panes, .mornings {
     grid-template-columns: 1fr;
-  }
-
-  /* Phone: a shorter placard, so the settings reach the first screen. */
-  .plac-long,
-  .guide {
-    display: none;
-  }
-
-  .plac-short {
-    display: block;
   }
 
   .opt-pill {
@@ -923,10 +843,6 @@ dl.facts dt {
 
   .limit::after {
     display: none;
-  }
-
-  .plac h1 {
-    font-size: calc(var(--text-hero) * 0.8);
   }
 }
 

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { PLAY_INTERVAL_MS } from './timing'
 import indexHtml from '../index.html?raw'
-import { footer, getSetting, marksIn, mornings, placard, product, settings, ui } from './scenario'
+import { getSetting, marksIn, mornings, placard, product, settings, ui } from './scenario'
 import { stepCount } from './reducer'
 
 const ACT = getSetting('act-alone')
@@ -38,24 +38,23 @@ const selectSetting = async (user: ReturnType<typeof userEvent.setup>, label: st
   user.click(screen.getByRole('radio', { name: label }))
 
 describe('the three layers of the approved layout', () => {
-  it('renders the placard, the product frame and Three mornings', () => {
+  it('renders the product frame with its replay control, and Three mornings; no author layer', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { level: 1, name: placard.title })).toBeInTheDocument()
-    expect(screen.getByText(placard.ask)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: placard.playLabel })).toBeInTheDocument()
+    expect(screen.queryByText(placard.ask)).not.toBeInTheDocument()
+    expect(screen.queryByText(placard.tagline)).not.toBeInTheDocument()
 
-    expect(screen.getByRole('heading', { level: 2, name: product.wordmark })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: product.wordmark })).toBeInTheDocument()
     expect(screen.getByText(product.breadcrumb)).toBeInTheDocument()
-    expect(screen.getByText(placard.tagline)).toBeInTheDocument()
     /* The section numbers are decoration, so each heading is named by its words alone. */
-    expect(screen.getByRole('heading', { level: 3, name: product.settingsHeading })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 3, name: product.logHeading })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 3, name: product.reportHeading })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: product.settingsHeading })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: product.logHeading })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: product.reportHeading })).toBeInTheDocument()
 
     expect(
       screen.getByRole('heading', { level: 2, name: mornings.heading }),
     ).toBeInTheDocument()
-    expect(screen.getByText(footer.text)).toBeInTheDocument()
+    expect(document.querySelector('footer')).not.toBeInTheDocument()
   })
 
   it('shows the off-limits rule in the approved words', () => {
@@ -583,16 +582,6 @@ describe('pass 4: Play the night controls', () => {
 })
 
 describe('pass 4: phone layout content', () => {
-  it('has a one-sentence scenario and the bare task for phones, beside the full desktop copy', () => {
-    render(<App />)
-    const short = screen.getByText(placard.ledeShort)
-    expect(short).toHaveClass('plac-short')
-    expect(placard.ledeShort.match(/\.\s|\.$/g)).toHaveLength(1)
-    expect(screen.getByText('Try all three.')).toHaveClass('plac-short')
-    expect(screen.getByText(placard.lede)).toHaveClass('plac-long')
-    expect(screen.getByText(placard.ask)).toHaveClass('plac-long')
-  })
-
   it("shows the chosen setting's current pill under it, and under no other option", async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -623,7 +612,7 @@ describe('pass 4: card focus', () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(screen.getByRole('button', { name: /^Flag only/ }))
-    const heading = screen.getByRole('heading', { level: 3, name: 'Morning report, 8:40 AM' })
+    const heading = screen.getByRole('heading', { level: 2, name: 'Morning report, 8:40 AM' })
     expect(document.activeElement).toBe(heading)
     expect(heading).toHaveAttribute('tabindex', '-1')
     expect(screen.getByRole('radio', { name: 'Flag only' })).toBeChecked()
@@ -743,18 +732,6 @@ describe('pass 5: phone scroll to the night', () => {
   })
 })
 
-describe('pass 5: the question is back on phone', () => {
-  it('sits between the one-sentence scenario and "Try all three."', () => {
-    render(<App />)
-    const scenario = screen.getByText(placard.ledeShort)
-    const question = screen.getByText('What should the agent be allowed to do?', { selector: '.plac-short' })
-    const task = screen.getByText('Try all three.')
-    expect(question).toHaveClass('plac-question', 'plac-short')
-    expect(scenario.nextElementSibling).toBe(question)
-    expect(question.nextElementSibling?.nextElementSibling).toBe(task)
-  })
-})
-
 describe('accessibility', () => {
   it('has no axe violations on load', async () => {
     const { container } = render(<App />)
@@ -812,9 +789,9 @@ describe('accessibility', () => {
 })
 
 describe('the name', () => {
-  it('is The Authority Line, on the page and on the main landmark', () => {
+  it('is The Authority Line on the main landmark only; the page shows the product', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { level: 1, name: 'The Authority Line' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 1, name: 'The Authority Line' })).not.toBeInTheDocument()
     expect(screen.getByRole('main', { name: 'The Authority Line' })).toBeInTheDocument()
   })
 
@@ -828,7 +805,7 @@ describe('the name', () => {
   })
 
   it('uses the new name in the browser tab title', () => {
-    expect(indexHtml).toContain('<title>The Authority Line</title>')
+    expect(indexHtml).toContain('<title>The Authority Line prototype · Halfmoon Tea</title>')
     expect(indexHtml).not.toMatch(/dial/i)
   })
 })

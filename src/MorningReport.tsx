@@ -31,7 +31,7 @@ export const MorningReport = forwardRef<HTMLParagraphElement, Props>(function Mo
 
         <div className="morning-body" aria-hidden={waiting || undefined}>
           <StatusPill pill={report.pill} />
-          <h4 className="report-head">{report.heading}</h4>
+          <h3 className="report-head">{report.heading}</h3>
 
           <dl className="facts">
             {report.facts.map((fact) => (

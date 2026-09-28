@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react'
 import { ActivityLog } from './ActivityLog'
 import { MorningReport } from './MorningReport'
-import { Placard } from './Placard'
+import { PlayControls } from './PlayControls'
 import { SettingsPane } from './SettingsPane'
 import { ThreeMornings } from './ThreeMornings'
 import {
-  footer,
   getSetting,
   placard,
   product,
@@ -213,26 +212,23 @@ export default function App() {
 
       <div className="page">
         <main id="main" aria-label={ui.mainLabel}>
-          <Placard
-            playLabel={playLabel}
-            inProgress={state.playing}
-            paused={state.paused}
-            onPlay={handlePlay}
-            onPauseToggle={handlePauseToggle}
-            onNext={handleNext}
-            playRef={playRef}
-            onControlsFocus={handlePlayStepsFocus}
-          />
-
-          <p className="tagline">{placard.tagline}</p>
-
           <section className="frame" aria-labelledby="product-title">
             <div className="bar">
-              <h2 className="wm" id="product-title">
+              <h1 className="wm" id="product-title">
                 <span className="moon" aria-hidden="true" />
                 {product.wordmark}
-              </h2>
+              </h1>
               <p className="crumb">{product.breadcrumb}</p>
+              <PlayControls
+                playLabel={playLabel}
+                inProgress={state.playing}
+                paused={state.paused}
+                onPlay={handlePlay}
+                onPauseToggle={handlePauseToggle}
+                onNext={handleNext}
+                playRef={playRef}
+                onControlsFocus={handlePlayStepsFocus}
+              />
             </div>
 
             <div className="panes">
@@ -277,9 +273,6 @@ export default function App() {
           </p>
         </main>
 
-        <footer className="site-foot">
-          <p>{footer.text}</p>
-        </footer>
       </div>
     </>
   )

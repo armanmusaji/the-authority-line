@@ -66,11 +66,11 @@ export function SectionHead({
   focusable?: boolean
 }) {
   return (
-    <h3 className="sech" id={id} tabIndex={focusable ? -1 : undefined}>
+    <h2 className="sech" id={id} tabIndex={focusable ? -1 : undefined}>
       <span className="num" aria-hidden="true">
         {number}
       </span>
       {children}
-    </h3>
+    </h2>
   )
 }

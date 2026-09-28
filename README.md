@@ -21,13 +21,14 @@ npm run build     # typecheck, then production build into dist/
 npm run preview   # serve the production build
 ```
 
-## The three layers
+## The two layers
 
 Layout comes from `../assets/layout-mockup-v4.html`. Look, marks and copy placement come from `../assets/visual-direction-v4.html`. Neither file's review notes ship.
 
-1. **Placard.** Arman's voice, in serif on the page ground: title, byline, the situation, "Try all three", the numbered three-part reading guide, and the optional "Play the night" button.
-2. **Product.** Halfmoon Tea's own tool, in sans on white under a tea-green bar. Agent settings on the tinted left column, as a three-stop rail. On the right in time order: the overnight log with its authority line and marks, then the morning report in its own cool-tinted section.
-3. **Three mornings.** One card per setting. A card fills in with its status pill and one-line summary once that setting has been viewed, and clicking a card selects it.
+The prototype is the product only. The author's framing (title, byline, situation, reading guide) lives on the case study page, not inside the prototype, so the tool reads as Halfmoon Tea's own. The optional "Play the night" replay control sits in the product bar as a feature of the tool.
+
+1. **Product.** Halfmoon Tea's own tool, in sans on white under a tea-green bar. Agent settings on the tinted left column, as a three-stop rail. On the right in time order: the overnight log with its authority line and marks, then the morning report in its own cool-tinted section.
+2. **Three mornings.** One card per setting. A card fills in with its status pill and one-line summary once that setting has been viewed, and clicking a card selects it.
 
 ### The visual language, in rules
 
@@ -50,7 +51,7 @@ Selecting a setting shows its whole night and its morning at once. No stepping i
 | `src/styles.css` | Every rule. Colours, spaces and radii all come from tokens. |
 | `src/Marks.tsx` | Authority marks, status pills, numbered section heads. |
 | `src/App.tsx` | Shell, the play clock, focus management, and the wiring. |
-| `src/Placard.tsx` | Title, situation and the Play control. |
+| `src/PlayControls.tsx` | The Play, Pause and Next controls in the product bar. |
 | `src/SettingsPane.tsx` | Native radio group, then the off-limits rule that holds under every setting. |
 | `src/ActivityLog.tsx` | Ordered list of the night, and the page's one live region. |
 | `src/MorningReport.tsx` | Pill, headline, facts, before and after, cost, actions. |
